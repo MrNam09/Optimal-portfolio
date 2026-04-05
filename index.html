@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tối Ưu Hoá Danh Mục Đầu Tư</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://unpkg.com/docx@8.2.2/build/index.umd.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>Portfolio Optimizer</h1>
+                </div>
+                <p class="subtitle">Tối Ưu Hoá Danh Mục Đầu Tư Chứng Khoán Việt Nam</p>
+            </div>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="steps-bar">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <span>Nhập dữ liệu</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <span>Lựa chọn</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <span>Kết quả</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <span>Tối ưu hoá</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Step 1: Data Input -->
+            <section class="step-panel active" id="step1-panel">
+                <h2><i class="fas fa-upload"></i> Bước 1: Nhập Dữ Liệu Đầu Vào</h2>
+
+                <div class="input-grid">
+                    <!-- Stock Data Upload -->
+                    <div class="upload-card">
+                        <h3><i class="fas fa-chart-bar"></i> Dữ liệu giá cổ phiếu</h3>
+                        <div class="dropzone" id="stock-dropzone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Kéo và thả file CSV/Excel vào đây</p>
+                            <p class="hint">Hỗ trợ: CafeF CSV (HSX, HNX, UPCOM)</p>
+                            <input type="file" id="stock-file" accept=".csv,.xlsx,.xls" multiple hidden>
+                            <button class="btn btn-outline" onclick="document.getElementById('stock-file').click()">
+                                <i class="fas fa-folder-open"></i> Chọn file
+                            </button>
+                        </div>
+                        <div class="file-list" id="stock-file-list"></div>
+                    </div>
+
+                    <!-- Index Data Upload -->
+                    <div class="upload-card">
+                        <h3><i class="fas fa-chart-area"></i> Dữ liệu chỉ số thị trường</h3>
+                        <div class="dropzone" id="index-dropzone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Kéo và thả file chỉ số vào đây</p>
+                            <p class="hint">VD: CafeF.INDEX.csv</p>
+                            <input type="file" id="index-file" accept=".csv,.xlsx,.xls" hidden>
+                            <button class="btn btn-outline" onclick="document.getElementById('index-file').click()">
+                                <i class="fas fa-folder-open"></i> Chọn file
+                            </button>
+                        </div>
+                        <div class="file-list" id="index-file-list"></div>
+                    </div>
+
+                    <!-- Sector Classification Upload -->
+                    <div class="upload-card">
+                        <h3><i class="fas fa-sitemap"></i> Bảng phân ngành (tuỳ chọn)</h3>
+                        <div class="dropzone" id="sector-dropzone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Kéo và thả file phân ngành</p>
+                            <p class="hint">File Excel phân ngành cổ phiếu</p>
+                            <input type="file" id="sector-file" accept=".xlsx,.xls" hidden>
+                            <button class="btn btn-outline" onclick="document.getElementById('sector-file').click()">
+                                <i class="fas fa-folder-open"></i> Chọn file
+                            </button>
+                        </div>
+                        <div class="file-list" id="sector-file-list"></div>
+                    </div>
+
+                    <!-- Parameters -->
+                    <div class="upload-card params-card">
+                        <h3><i class="fas fa-sliders-h"></i> Tham số đầu vào</h3>
+                        <div class="param-group">
+                            <label for="risk-free-rate">
+                                <i class="fas fa-shield-alt"></i> Lãi suất phi rủi ro (% / năm)
+                            </label>
+                            <input type="number" id="risk-free-rate" value="4.5" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="param-group">
+                            <label for="risk-aversion">
+                                <i class="fas fa-balance-scale"></i> Hệ số ngại rủi ro (A)
+                            </label>
+                            <input type="number" id="risk-aversion" value="3" step="0.5" min="0.5" max="20">
+                        </div>
+                        <div class="param-group">
+                            <label for="market-index">
+                                <i class="fas fa-globe"></i> Chỉ số thị trường tham chiếu
+                            </label>
+                            <select id="market-index">
+                                <option value="VNINDEX">VNINDEX</option>
+                                <option value="HNX-INDEX">HNX-INDEX</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg" id="btn-next-1" disabled>
+                        Tiếp tục <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 2: Data Selection -->
+            <section class="step-panel" id="step2-panel">
+                <h2><i class="fas fa-filter"></i> Bước 2: Lựa Chọn Dữ Liệu</h2>
+
+                <!-- Time Period -->
+                <div class="selection-card">
+                    <h3><i class="fas fa-calendar-alt"></i> Khoảng thời gian tính toán</h3>
+                    <div class="period-options">
+                        <label class="radio-card">
+                            <input type="radio" name="period" value="5y" checked>
+                            <div class="radio-content">
+                                <i class="fas fa-calendar"></i>
+                                <span>5 năm gần nhất</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="period" value="3y">
+                            <div class="radio-content">
+                                <i class="fas fa-calendar"></i>
+                                <span>3 năm gần nhất</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="period" value="1y">
+                            <div class="radio-content">
+                                <i class="fas fa-calendar"></i>
+                                <span>Năm gần nhất</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="period" value="250d">
+                            <div class="radio-content">
+                                <i class="fas fa-calendar-day"></i>
+                                <span>250 phiên gần nhất</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="period-info" id="period-info"></div>
+                </div>
+
+                <!-- Sector & Stock Selection -->
+                <div class="selection-card">
+                    <h3><i class="fas fa-building"></i> Chọn ngành và cổ phiếu (1-10 cổ phiếu)</h3>
+                    <div class="stock-selection-layout">
+                        <div class="sector-panel">
+                            <h4>Ngành</h4>
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="sector-search" placeholder="Tìm ngành...">
+                            </div>
+                            <div class="sector-list" id="sector-list"></div>
+                        </div>
+                        <div class="stock-panel">
+                            <h4>Cổ phiếu trong ngành</h4>
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="stock-search" placeholder="Tìm mã cổ phiếu...">
+                            </div>
+                            <div class="stock-list" id="stock-list"></div>
+                        </div>
+                        <div class="selected-panel">
+                            <h4>Đã chọn (<span id="selected-count">0</span>/10)</h4>
+                            <div class="selected-stocks" id="selected-stocks"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Allocation -->
+                <div class="selection-card" id="weight-section" style="display:none;">
+                    <h3><i class="fas fa-balance-scale-left"></i> Tỷ trọng danh mục</h3>
+                    <div class="weight-mode">
+                        <label class="radio-card small">
+                            <input type="radio" name="weight-mode" value="equal" checked>
+                            <div class="radio-content">
+                                <i class="fas fa-equals"></i>
+                                <span>Tỷ trọng bằng nhau</span>
+                            </div>
+                        </label>
+                        <label class="radio-card small">
+                            <input type="radio" name="weight-mode" value="custom">
+                            <div class="radio-content">
+                                <i class="fas fa-pen"></i>
+                                <span>Tuỳ chỉnh</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="weight-inputs" id="weight-inputs"></div>
+                    <div class="weight-total">
+                        Tổng tỷ trọng: <span id="weight-total" class="weight-value">0%</span>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" id="btn-back-2">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </button>
+                    <button class="btn btn-primary btn-lg" id="btn-next-2" disabled>
+                        Tính toán <i class="fas fa-calculator"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 3: Results -->
+            <section class="step-panel" id="step3-panel">
+                <h2><i class="fas fa-chart-pie"></i> Bước 3: Kết Quả Danh Mục</h2>
+
+                <!-- Individual Stock Metrics -->
+                <div class="result-card">
+                    <h3><i class="fas fa-list-ol"></i> Lợi nhuận, rủi ro, Beta từng cổ phiếu</h3>
+                    <div class="table-container">
+                        <table id="stock-metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã CP</th>
+                                    <th>Lợi nhuận kỳ vọng (%/năm)</th>
+                                    <th>Độ lệch chuẩn (%/năm)</th>
+                                    <th>Beta (β)</th>
+                                    <th>Tỷ trọng (%)</th>
+                                    <th>Sharpe Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Correlation Matrix -->
+                <div class="result-card">
+                    <h3><i class="fas fa-th"></i> Ma trận hệ số tương quan</h3>
+                    <div class="table-container">
+                        <table id="correlation-table"></table>
+                    </div>
+                    <div id="correlation-heatmap" class="chart-container"></div>
+                </div>
+
+                <!-- Portfolio Metrics -->
+                <div class="result-card highlight-card">
+                    <h3><i class="fas fa-briefcase"></i> Chỉ số danh mục đầu tư</h3>
+                    <div class="portfolio-metrics">
+                        <div class="metric-box">
+                            <div class="metric-label">Lợi nhuận kỳ vọng</div>
+                            <div class="metric-value" id="port-return">-</div>
+                            <div class="metric-unit">%/năm</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Rủi ro (σ)</div>
+                            <div class="metric-value" id="port-risk">-</div>
+                            <div class="metric-unit">%/năm</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Beta (β)</div>
+                            <div class="metric-value" id="port-beta">-</div>
+                            <div class="metric-unit"></div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Sharpe Ratio</div>
+                            <div class="metric-value" id="port-sharpe">-</div>
+                            <div class="metric-unit"></div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Hữu dụng (U)</div>
+                            <div class="metric-value" id="port-utility">-</div>
+                            <div class="metric-unit">%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Chart -->
+                <div class="result-card">
+                    <h3><i class="fas fa-chart-line"></i> Biểu đồ giá cổ phiếu (chuẩn hoá)</h3>
+                    <div id="price-chart" class="chart-container"></div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" id="btn-back-3">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </button>
+                    <button class="btn btn-primary btn-lg" id="btn-next-3">
+                        Tối ưu hoá <i class="fas fa-magic"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 4: Optimization -->
+            <section class="step-panel" id="step4-panel">
+                <h2><i class="fas fa-magic"></i> Bước 4: Tối Ưu Hoá Danh Mục</h2>
+
+                <!-- Simulation Controls -->
+                <div class="result-card">
+                    <h3><i class="fas fa-random"></i> Mô phỏng Monte Carlo</h3>
+                    <div class="sim-controls">
+                        <label>Số lượng danh mục ngẫu nhiên:</label>
+                        <div class="sim-buttons">
+                            <button class="btn btn-sim" data-n="10">10</button>
+                            <button class="btn btn-sim" data-n="100">100</button>
+                            <button class="btn btn-sim active" data-n="1000">1,000</button>
+                            <button class="btn btn-sim" data-n="10000">10,000</button>
+                            <button class="btn btn-sim" data-n="100000">100,000</button>
+                        </div>
+                    </div>
+                    <div class="sim-controls" style="margin-top:12px;">
+                        <label>Giới hạn tỷ trọng tối đa mỗi CP (%):</label>
+                        <input type="number" id="max-weight-pct" value="100" min="10" max="100" step="5"
+                               style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;text-align:center;">
+                        <span style="font-size:13px;color:var(--text-light);">
+                            (VD: 40% = mỗi CP tối đa 40% danh mục)
+                        </span>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <button class="btn btn-primary" id="btn-run-sim">
+                            <i class="fas fa-play"></i> Chạy mô phỏng
+                        </button>
+                    </div>
+                    <div class="progress-bar" id="sim-progress" style="display:none;">
+                        <div class="progress-fill"></div>
+                        <span class="progress-text">0%</span>
+                    </div>
+                </div>
+
+                <!-- Efficient Frontier Chart -->
+                <div class="result-card">
+                    <h3><i class="fas fa-project-diagram"></i> Đường biên hiệu quả & CML</h3>
+                    <div id="frontier-chart" class="chart-container large"></div>
+                </div>
+
+                <!-- Utility Curve -->
+                <div class="result-card">
+                    <h3><i class="fas fa-wave-square"></i> Đường cong hữu dụng</h3>
+                    <div id="utility-chart" class="chart-container large"></div>
+                </div>
+
+                <!-- Optimal Portfolios -->
+                <div class="result-card highlight-card">
+                    <h3><i class="fas fa-trophy"></i> Danh mục tối ưu</h3>
+                    <div class="optimal-portfolios">
+                        <div class="opt-port-card" id="max-return-port">
+                            <h4><i class="fas fa-arrow-up" style="color:#00c853"></i> Lợi nhuận cao nhất</h4>
+                            <div class="opt-details"></div>
+                        </div>
+                        <div class="opt-port-card" id="min-risk-port">
+                            <h4><i class="fas fa-shield-alt" style="color:#2196f3"></i> Rủi ro thấp nhất</h4>
+                            <div class="opt-details"></div>
+                        </div>
+                        <div class="opt-port-card" id="tangency-port">
+                            <h4><i class="fas fa-star" style="color:#ff9800"></i> Danh mục tiếp tuyến (Sharpe tối đa)</h4>
+                            <div class="opt-details"></div>
+                        </div>
+                        <div class="opt-port-card" id="optimal-port">
+                            <h4><i class="fas fa-crown" style="color:#e91e63"></i> Danh mục tối ưu (Hữu dụng tối đa)</h4>
+                            <div class="opt-details"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Comparison Chart -->
+                <div class="result-card">
+                    <h3><i class="fas fa-chart-bar"></i> So sánh tỷ trọng các danh mục</h3>
+                    <div id="weight-comparison-chart" class="chart-container"></div>
+                </div>
+
+                <!-- Export & History -->
+                <div class="result-card">
+                    <h3><i class="fas fa-download"></i> Xuất kết quả</h3>
+                    <div class="export-buttons">
+                        <button class="btn btn-success" id="btn-export-excel">
+                            <i class="fas fa-file-excel"></i> Xuất Excel
+                        </button>
+                        <button class="btn btn-info" id="btn-export-word">
+                            <i class="fas fa-file-word"></i> Xuất Word
+                        </button>
+                        <button class="btn btn-warning" id="btn-save-result">
+                            <i class="fas fa-save"></i> Lưu kết quả
+                        </button>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" id="btn-back-4">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- History Sidebar -->
+        <div class="history-toggle" id="history-toggle">
+            <i class="fas fa-history"></i>
+        </div>
+        <aside class="history-sidebar" id="history-sidebar">
+            <h3><i class="fas fa-history"></i> Lịch sử kết quả</h3>
+            <div class="history-list" id="history-list">
+                <p class="empty-state">Chưa có kết quả nào được lưu</p>
+            </div>
+        </aside>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p id="loading-text">Đang xử lý...</p>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <script src="js/data-processor.js"></script>
+    <script src="js/portfolio-engine.js"></script>
+    <script src="js/chart-renderer.js"></script>
+    <script src="js/exporter.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
